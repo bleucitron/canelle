@@ -11,27 +11,41 @@ const headers = {
   "X-Api-key": token
 };
 
-fetch('https://ipinfo.io/ip')
-.then(resp => resp.text())
-.then(ip => {
-  ip = ip.slice(0, ip.length - 1);
-  console.log('Current public IP', ip);
-
-  const body = {
-    "rrset_values": [ip]
-  };
-
-  return fetch(url, {
-    method: 'PUT',
-    headers,
-    body: JSON.stringify(body)
-  });
+const currentRecord = fetch(url, {
+  method: 'GET',
+  headers
 })
-.then(res => {
-  const { status, statusText, ok } = res;
-  console.log(statusText);
-  console.log('Status:', status);
-  if (ok) console.log('Done !');
+.then(resp => resp.json())
+.then(res => res.rrset_values[0]);
+
+const currentPublicIP = fetch('https://ipinfo.io/ip')
+.then(resp => resp.text())
+.then(ip => ip.slice(0, ip.length - 1));
+
+Promise.all([currentRecord, currentPublicIP])
+.then(([record, ip]) => {
+  const needsUpdate = record !== ip;
+  console.log("Needs update ?", needsUpdate);
+
+  if (needsUpdate) {
+    console.log('Recording new IP', ip);
+
+    const body = {
+      "rrset_values": [ip]
+    };
+
+    return fetch(url, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify(body)
+    })
+    .then(res => {
+      const { status, statusText, ok } = res;
+      console.log(`${statusText} (Status: ${status})`);
+      if (ok) console.log('Done !');
+    })
+  }
+
+  return;
 })
 .catch(err => console.log('ERR', err));
-
