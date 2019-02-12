@@ -25,9 +25,10 @@ const currentPublicIP = fetch('https://ipinfo.io/ip')
 Promise.all([currentRecord, currentPublicIP])
 .then(([record, ip]) => {
   const needsUpdate = record !== ip;
-  console.log("Needs update ?", needsUpdate);
 
   if (needsUpdate) {
+    const now = new Date();
+    console.log(now.toISOString());
     console.log('Recording new IP', ip);
 
     const body = {
@@ -48,4 +49,8 @@ Promise.all([currentRecord, currentPublicIP])
 
   return;
 })
-.catch(err => console.log('ERR', err));
+.catch(err => {
+  const now = new Date();
+  console.log(now.toISOString());
+  console.log('ERR', err)
+});
